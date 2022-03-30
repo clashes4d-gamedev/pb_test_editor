@@ -2,7 +2,6 @@ import pygame
 from sys import exit
 import SPRNVA as sprnva
 from SPRNVA import Vector
-
 pygame.init()
 
 # TODO Optimize
@@ -106,6 +105,8 @@ class Main:
                         pygame.draw.line(grid_surf, (255, 255, 255), (int(self.grid_params['size']) * x, 0), (int(self.grid_params['size']) * x, int(self.grid_params['y'])))
 
                 if m_btns == (True, False, False):
+                    row = int(self.tile_m_x/int(self.grid_params['size'])) * '0'
+                    self.list = int(self.tile_m_y/int(self.grid_params['size'])) * row
                     print(int(self.tile_m_x/int(self.grid_params['size'])), int(self.tile_m_y/int(self.grid_params['size'])))
 
             except ZeroDivisionError:
