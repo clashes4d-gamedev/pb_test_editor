@@ -5,6 +5,7 @@ from SPRNVA import Vector
 pygame.init()
 
 # TODO Optimize
+# TODO just implement saving the file to a .lvl file and this project is done.
 class Main:
     def __init__(self):
         # Sets the window size to be the resolution of the monitor
@@ -31,11 +32,12 @@ class Main:
         self.tile_m_y = 0
 
         # Stores the Grid dimensions and tile size in a list
-        self.grid_params = {'x': '0', 'y': '0', 'size': '2'}
+        self.grid_params = {'x': '0', 'y': '0', 'size': '0'}
 
     def update(self):
         grid_surf = pygame.Surface((self.win_size[0]/1.2, self.win_size[1]/1.2))
         grid_rect = grid_surf.get_rect()
+        gen_map = True
 
         grid_param_inputs = {}
         for i, key in enumerate(self.grid_params):
@@ -60,6 +62,7 @@ class Main:
             # Checks if Escape has been pressed, if so exit
             if keys[pygame.K_ESCAPE]:
                 pygame.quit()
+                print(self.tiles)
                 exit()
 
             # loop through available tile types and generate a button at the button of the screen if the button is pressed the active tile type switches, default is the first dictonary entry
@@ -104,10 +107,14 @@ class Main:
                     for x in range(int(int(self.grid_params['x']) / int(self.grid_params['size']))):
                         pygame.draw.line(grid_surf, (255, 255, 255), (int(self.grid_params['size']) * x, 0), (int(self.grid_params['size']) * x, int(self.grid_params['y'])))
 
+                if self.grid_params['x'] != '0' and self.grid_params['y'] != '0' and self.grid_params['size'] != '0' and gen_map == True:
+                    row = int(self.grid_params['x']/int(self.grid_params['size'])) * ['0']
+                    self.tiles = int(self.grid_params['y']/int(self.grid_params['size'])) * [row]
+                    gen_map = False
+
                 if m_btns == (True, False, False):
-                    row = int(self.tile_m_x/int(self.grid_params['size'])) * '0'
-                    self.list = int(self.tile_m_y/int(self.grid_params['size'])) * row
                     print(int(self.tile_m_x/int(self.grid_params['size'])), int(self.tile_m_y/int(self.grid_params['size'])))
+                    self.tiles[int(self.tile_m_y/int(self.grid_params['size']))][int(self.tile_m_x/int(self.grid_params['size']))] = self.current_selected_tile_type
 
             except ZeroDivisionError:
                 pass
@@ -116,6 +123,7 @@ class Main:
             for event in events:
                 if event.type == pygame.QUIT:
                     pygame.quit()
+                    print(self.tiles)
                     exit()
 
             # Draws, resets the loop and keeps the framerate capped.
