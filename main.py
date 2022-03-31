@@ -1,3 +1,4 @@
+from re import T
 import pygame
 from sys import exit
 import os
@@ -32,7 +33,7 @@ class Main:
         self.tiles = []
         self.tile_m_x = 0
         self.tile_m_y = 0
-        self.selected_tile = [0,0]
+        self.selected_tile = Vector(0, 0)
 
         # Checks if the user has pressed the export button
         self.export = False
@@ -125,39 +126,44 @@ class Main:
                     gen_map = False
 
                 # Generates grid
-                for y in range(int(self.grid_params['y'])):
+                for y in range(int(self.grid_params['y'])+1):
                     if int(self.grid_params['y']) <= grid_rect.height:
-                        pygame.draw.line(grid_surf, (255, 255, 255), (0, y * int(self.grid_params['size'])), (grid_rect.width, y * int(self.grid_params['size'])))
+                        if y == int(self.grid_params['y']):
+                            pygame.draw.line(grid_surf, (255, 0, 0), (0, y * int(self.grid_params['size'])), (int(self.grid_params['size']) * int(self.grid_params['x']), y * int(self.grid_params['size'])))
+                        else:
+                            pygame.draw.line(grid_surf, (255, 255, 255), (0, y * int(self.grid_params['size'])), (int(self.grid_params['size']) * int(self.grid_params['x']), y * int(self.grid_params['size'])))
 
-                    for x in range(int(self.grid_params['x'])):
+                    for x in range(int(self.grid_params['x'])+1):
                         if int(self.grid_params['x']) <= grid_rect.width:
-                            pygame.draw.line(grid_surf, (255, 255, 255), (x * int(self.grid_params['size']), 0), (x * int(self.grid_params['size']), grid_rect.height))
+                            if x == int(self.grid_params['x']):
+                                pygame.draw.line(grid_surf, (255, 0, 0), (x * int(self.grid_params['size']), 0), (x * int(self.grid_params['size']), int(self.grid_params['size']) * y))
+                            else:
+                                pygame.draw.line(grid_surf, (255, 255, 255), (x * int(self.grid_params['size']), 0), (x * int(self.grid_params['size']), int(self.grid_params['size']) * y))
 
-                for y, row in enumerate(self.tiles):
-                    for x, col in enumerate(row):
-                        if m_btns == (True, False, False):
-                            if grid_rect.collidepoint(m_x, m_y):
-                                if self.tile_m_x/self.grid_params['size'] == x:
-                                    self.selected_tile[0] = x
+                got_x = False
+                got_y = False
 
-                                if self.tile_m_y/self.grid_params['size'] == y:
-                                    self.selected_tile[1] = y
+                for event in events:
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if event.button == 1:
+                            for y, row in enumerate(self.tiles):
+                                for x, tile in enumerate(row):
+                                    if grid_rect.collidepoint(m_x, m_y):
+                                        if y == self.tile_m_y//int(self.grid_params['size']) and got_y == False:
+                                            if x == self.tile_m_x//int(self.grid_params['size']) and got_x == False:
+                                                self.tiles[y][x] = self.current_selected_tile_type
+
+                    else:
+                        got_x = False
+                        got_y = False
 
                 if self.grid_params['x'] != '0' and self.grid_params['y'] != '0' and self.grid_params['size'] != '0':
                     self.export = ex_button.draw()
-                else:
-                    self.tiles = []
-                    gen_map = True
+
 
             except ZeroDivisionError:
                 pass
 
-            print(gen_map)
-
-            try:
-                self.tiles[self.selected_tile[1]][self.selected_tile[0]] = self.current_selected_tile_type
-            except IndexError:
-                pass
 
             if self.export:
                 ex_surf = pygame.Surface((self.win_size[0], self.win_size[1]))
