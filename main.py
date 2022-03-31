@@ -32,7 +32,7 @@ class Main:
         self.tiles = []
         self.tile_m_x = 0
         self.tile_m_y = 0
-        self.selected_tile = (0,0)
+        self.selected_tile = [0,0]
 
         # Checks if the user has pressed the export button
         self.export = False
@@ -101,7 +101,7 @@ class Main:
 
             # Draws and gets the input value out of the three text boxes at the bottom of the screen.
             for index, key in enumerate(grid_param_inputs):
-                sprnva.TextRenderer(self.win, grid_param_inputs[key].collider.x - 64, grid_param_inputs[key].collider.y + 10, 'Grid length ' + key + ':', 'Arial', 16, (255, 255, 255))
+                sprnva.TextRenderer(self.win, grid_param_inputs[key].collider.x - 64, grid_param_inputs[key].collider.y + 10, 'Grid ' + key + ':', 'Arial', 16, (255, 255, 255))
                 grid_param_inputs[key].get_input(events)
                 grid_param_inputs[key].update((True, False, False))
                 grid_param_inputs[key].draw()
@@ -114,6 +114,8 @@ class Main:
             try:
                 self.tile_m_x = m_x // int(self.grid_params['size']) * int(self.grid_params['size'])
                 self.tile_m_y = m_y // int(self.grid_params['size']) * int(self.grid_params['size'])
+
+                sprnva.TextRenderer(self.win, self.win_size[0] - 150, 80, f'POS: {self.tile_m_x / int(self.grid_params["size"])+1, self.tile_m_y / int(self.grid_params["size"])+1}', 'Arial', 20, (255, 255, 255))
 
                 pygame.draw.rect(grid_surf, (255, 255, 255), pygame.Rect(self.tile_m_x, self.tile_m_y, int(self.grid_params['size']), int(self.grid_params['size'])))
 
@@ -132,20 +134,29 @@ class Main:
                             pygame.draw.line(grid_surf, (255, 255, 255), (x * int(self.grid_params['size']), 0), (x * int(self.grid_params['size']), grid_rect.height))
 
                 for y, row in enumerate(self.tiles):
-                    print(row, '\n')
                     for x, col in enumerate(row):
-                        print(col, '\n')
-                        print(self.tiles[y][x])
                         if m_btns == (True, False, False):
                             if grid_rect.collidepoint(m_x, m_y):
-                                self.selected_tile = (x, y)
+                                if self.tile_m_x/self.grid_params['size'] == x:
+                                    self.selected_tile[0] = x
+
+                                if self.tile_m_y/self.grid_params['size'] == y:
+                                    self.selected_tile[1] = y
 
                 if self.grid_params['x'] != '0' and self.grid_params['y'] != '0' and self.grid_params['size'] != '0':
                     self.export = ex_button.draw()
-
-                #self.tiles[self.selected_tile[1]][self.selected_tile[0]] = self.current_selected_tile_type
+                else:
+                    self.tiles = []
+                    gen_map = True
 
             except ZeroDivisionError:
+                pass
+
+            print(gen_map)
+
+            try:
+                self.tiles[self.selected_tile[1]][self.selected_tile[0]] = self.current_selected_tile_type
+            except IndexError:
                 pass
 
             if self.export:
