@@ -1,15 +1,13 @@
-from re import T
+# This programm is so janky i just dont know how it even works. :)
 import pygame
-from sys import exit
-import os
 import SPRNVA as sprnva
-import time
+import json
+from sys import exit
 from SPRNVA import Vector
 from pandas import DataFrame
 pygame.init()
 
 # TODO Optimize
-# TODO find out why this is still drawing lines
 class Main:
     def __init__(self):
         # Sets the window size to be the resolution of the monitor
@@ -27,7 +25,11 @@ class Main:
 
         # Button setup and tile type selection
         self.tile_select_b_size = Vector(50, 50)
-        self.tile_types = {'1': 'NONE / Air', '2': 'stone', '3': 'wood'}
+        self.tile_types = open('config.json')
+        self.tile_types = json.load(self.tile_types)
+        self.tile_types = self.tile_types['tile_types']
+        print(self.tile_types)
+        #self.tile_types = {'1': 'NONE / Air', '2': 'stone', '3': 'wood'}
         self.current_selected_tile_type = '1'
 
         # Stores the 'Drawn' tiles in a list
@@ -39,12 +41,12 @@ class Main:
         # Checks if the user has pressed the export button
         self.export = False
 
-        # Stores the Grid dimensions and tile size in a list
+        # Stores the Grid dimensions and tile size in a dict
         self.grid_params = {'x': '0', 'y': '0', 'size': '0'}
 
     def grid_param_input_fields(self, events, grid_param_inputs):
         # Draws a text which tells the user what tile he has currently selected.
-        sprnva.TextRenderer(self.win, self.tile_select_b_size.x + self.center.x - (self.tile_select_b_size.x * len(self.tile_types))/2 + self.tile_select_b_size.x/2, self.center.y*2 - self.tile_select_b_size.y - 20, 'Current selected tile type: ' + self.tile_types[self.current_selected_tile_type], 'Arial', 10, (255, 255, 255))
+        sprnva.TextRenderer(self.win, self.tile_select_b_size.x + self.center.x - (self.tile_select_b_size.x * len(self.tile_types))/2 + self.tile_select_b_size.x/2, self.center.y*2 - self.tile_select_b_size.y - 20, 'Current selected tile type: ' + self.tile_types[self.current_selected_tile_type]['name'], 'Arial', 10, (255, 255, 255))
 
         # Draws and gets the input value out of the three text boxes at the bottom of the screen.
         for index, key in enumerate(grid_param_inputs):
@@ -105,25 +107,13 @@ class Main:
             if should_export:
                 ex_path = tb_ex_path.get_value()
                 file = open(ex_path + '.lvl', 'w')
-                lines = []
+                tile_lines = self.tiles.values.tolist()
 
-                #for row in self.tiles:
-                #    for char in row:
-                #        lines.append(char)
-                #    lines.append('\n')
+                for row in tile_lines:
+                    for col in row:
+                        file.write(str(col))
+                    file.write('\n')
 
-                x = 0
-                y = 0
-                for row in self.tiles.iterrows():
-                    x = 0
-                    for col in self.tiles:
-                        lines.append(str(col))
-                        x += 1
-                    lines.append('\n')
-                    y += 1
-
-                #print(lines)
-                file.writelines(lines)
                 file.close()
                 pygame.quit()
                 exit()
@@ -146,14 +136,13 @@ class Main:
             self.clock.tick(self.fps)
 
     def update(self):
-        grid_surf = pygame.Surface((self.win_size[0]/1.2, self.win_size[1]/1.2))
+        grid_surf = pygame.Surface((self.win_size[0], self.win_size[1]/1.2))
         gen_map = True
 
         grid_param_inputs = {}
         for i, key in enumerate(self.grid_params):
             grid_param_inputs[key] = sprnva.InputBox(self.win, Vector(self.center.x/2, (self.center.y*2 - 60) + i*20), Vector(50, 20))
 
-        mb_pressed = False
 
         while True:
             # Clears surfaces
@@ -181,7 +170,7 @@ class Main:
             # Sets up the export button
             ex_button = sprnva.Button(self.win,
                                            self.win_size[0] - 120,
-                                           self.center.y,
+                                           self.win_size[1] - 100,
                                            100,
                                            50,
                                            (m_x, m_y),
@@ -189,36 +178,65 @@ class Main:
                                            0, btn_text='Export as .lvl')
 
             # loop through available tile types and generate a button at the button of the screen if the button is pressed the active tile type switches, default is the first dictonary entry
-            for i, (key, value) in enumerate(self.tile_types.items()):
+            #for i, (key, value) in enumerate(self.tile_types.items()):
+            #    #TODO Add an Outline around the currently selected tile type
+            #    sel_btn = sprnva.Button(self.win,
+            #                            i*self.tile_select_b_size.x + self.center.x - (self.tile_select_b_size.x * len(self.tile_types)/2),
+            #                            self.center.y*2 - self.tile_select_b_size.y,
+            #                            self.tile_select_b_size.x,
+            #                            self.tile_select_b_size.y,
+            #                            (m_x, m_y),
+            #                            m_btns,
+            #                            0, btn_text=value)
+            #    is_pressed = sel_btn.draw()
+
+            #    if is_pressed is True:
+            #        self.current_selected_tile_type = str(key)
+
+            for tile in self.tile_types:
+                tile_name = self.tile_types[tile]['name']
+                tile_file_path = self.tile_types[tile]['file_path']
+
                 sel_btn = sprnva.Button(self.win,
-                                        i*self.tile_select_b_size.x + self.center.x - (self.tile_select_b_size.x * len(self.tile_types)/2),
+                                        int(tile)*self.tile_select_b_size.x + self.center.x - (self.tile_select_b_size.x * len(self.tile_types)/2),
                                         self.center.y*2 - self.tile_select_b_size.y,
                                         self.tile_select_b_size.x,
                                         self.tile_select_b_size.y,
                                         (m_x, m_y),
                                         m_btns,
-                                        0, btn_text=value)
+                                        0, btn_text=tile_name)
+
                 is_pressed = sel_btn.draw()
 
                 if is_pressed is True:
-                    self.current_selected_tile_type = str(key)
+                    self.current_selected_tile_type = str(tile)
 
+                print(tile_file_path)
+
+            # Generates the input fields for the grid parameter
             self.grid_param_input_fields(events, grid_param_inputs)
 
             # Draws a Grid in given dimensions. and generates tile coordinates
             try:
+                # Tile coordinates
                 self.tile_m_x = m_x // int(self.grid_params['size']) * int(self.grid_params['size'])
                 self.tile_m_y = m_y // int(self.grid_params['size']) * int(self.grid_params['size'])
 
+                # Tells the user the position of the current tile he is hovering over.
                 sprnva.TextRenderer(self.win, self.win_size[0] - 150, 80, f'POS: {self.tile_m_x / int(self.grid_params["size"])+1, self.tile_m_y / int(self.grid_params["size"])+1}', 'Arial', 20, (255, 255, 255))
 
+                # Draws the tile cursor at the given tile
                 pygame.draw.rect(grid_surf, (255, 255, 255), pygame.Rect(self.tile_m_x, self.tile_m_y, int(self.grid_params['size']), int(self.grid_params['size'])))
 
+                # Get's the grid parameters and draws the export button if they are not zero
                 if self.grid_params['x'] != '0' and self.grid_params['y'] != '0' and self.grid_params['size'] != '0' and gen_map is True:
                     row = int(self.grid_params['x']) * ['0']
                     self.tiles = int(self.grid_params['y']) * [row]
                     self.tiles = DataFrame(self.tiles)
                     gen_map = False
+
+                if self.grid_params['x'] != '0' and self.grid_params['y'] != '0' and self.grid_params['size'] != '0':
+                    self.export = ex_button.draw()
 
                 # Generates grid
                 for y in range(int(self.grid_params['y'])+1):
@@ -251,11 +269,12 @@ class Main:
                 else:
                     pass
 
-                if self.grid_params['x'] != '0' and self.grid_params['y'] != '0' and self.grid_params['size'] != '0':
-                    self.export = ex_button.draw()
-
             except ZeroDivisionError:
-                pass
+                self.tiles = DataFrame(list())
+                gen_map = True
+
+            # If the tilesize is 0 a ZeroDivisionError will be triggered and the Tilemap resets.
+            sprnva.TextRenderer(self.win, 200, self.win_size[1] - 50, 'Set the Tilesize to 0 to reset the map.', 'Arial', 20, (255, 255, 255))
 
             # Handel's the export screen
             if self.export:
@@ -267,33 +286,31 @@ class Main:
                     pygame.quit()
                     exit()
 
-            #TODO rework this to actually draw the tiles
-            #x = 0
-            #y = 0
-            #for row in self.tiles.iterrows():
-            #    x = 0
-            #    for col in self.tiles:
-            #        if col is 1:
-            #            pygame.draw.rect(grid_surf, (255, 0, 0), pygame.Rect(x * int(self.grid_params['size']),
-            #                                                                 y * int(self.grid_params['size']),
-            #                                                                 int(self.grid_params['size']),
-            #                                                                 int(self.grid_params['size'])))
-            #        x += 1
-            #    y += 1
-
+            # Draws the tile types at the correct location
             y = 0
             x = 0
             for row in self.tiles.iterrows():
                 x = 0
                 for col in self.tiles:
-                    #print(x, y)
-                    if self.tiles.loc[x, y] == '1':
-                        pygame.draw.rect(grid_surf, (255, 0, 0), pygame.Rect(
+                    #if self.tiles.loc[x, y] == '1':
+                    #    pygame.draw.rect(grid_surf, (255, 0, 0), pygame.Rect(
+                    #                    x * int(self.grid_params['size']),
+                    #                    y * int(self.grid_params['size']),
+                    #                    int(self.grid_params['size']),
+                    #                    int(self.grid_params['size'])))
+                    for tile_index in self.tile_types:
+                        if self.tile_types[tile_index]['file_path'] != str():
+                            if self.tiles.loc[x, y] == tile_index:
+                                #TODO draw the corresponding image at the tile location
+                                pass
+                        else:
+                            if self.tiles.loc[x, y] == tile_index:
+                                pygame.draw.rect(grid_surf, self.tile_types[tile_index]['alt_color'],
+                                        pygame.Rect(
                                         x * int(self.grid_params['size']),
                                         y * int(self.grid_params['size']),
                                         int(self.grid_params['size']),
                                         int(self.grid_params['size'])))
-
                     x += 1
                 y += 1
 

@@ -1,0 +1,13 @@
+{
+    "tile_types":{
+        "0":{"name": "Air",
+            "file_path":"",
+            "alt_color":"(255, 0, 0)"},
+        "1":{"name": "Stone",
+            "file_path": "",
+            "alt_color":"(0, 255, 0)"},
+        "2":{"name": "Wood",
+            "file_path": "",
+            "alt_color":"(0, 0, 255)"}
+    }
+}
