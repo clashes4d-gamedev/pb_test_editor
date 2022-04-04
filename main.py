@@ -5,6 +5,7 @@ import os
 import SPRNVA as sprnva
 import time
 from SPRNVA import Vector
+from pandas import DataFrame
 pygame.init()
 
 # TODO Optimize
@@ -30,7 +31,7 @@ class Main:
         self.current_selected_tile_type = '1'
 
         # Stores the 'Drawn' tiles in a list
-        self.tiles = []
+        self.tiles = DataFrame(list())
         self.tile_m_x = 0
         self.tile_m_y = 0
         self.selected_tile = Vector(0, 0)
@@ -106,12 +107,22 @@ class Main:
                 file = open(ex_path + '.lvl', 'w')
                 lines = []
 
-                for row in self.tiles:
-                    for char in row:
-                        lines.append(char)
-                    lines.append('\n')
+                #for row in self.tiles:
+                #    for char in row:
+                #        lines.append(char)
+                #    lines.append('\n')
 
-                print(lines)
+                x = 0
+                y = 0
+                for row in self.tiles.iterrows():
+                    x = 0
+                    for col in self.tiles:
+                        lines.append(str(col))
+                        x += 1
+                    lines.append('\n')
+                    y += 1
+
+                #print(lines)
                 file.writelines(lines)
                 file.close()
                 pygame.quit()
@@ -206,6 +217,7 @@ class Main:
                 if self.grid_params['x'] != '0' and self.grid_params['y'] != '0' and self.grid_params['size'] != '0' and gen_map is True:
                     row = int(self.grid_params['x']) * ['0']
                     self.tiles = int(self.grid_params['y']) * [row]
+                    self.tiles = DataFrame(self.tiles)
                     gen_map = False
 
                 # Generates grid
@@ -223,11 +235,21 @@ class Main:
                             else:
                                 pygame.draw.line(grid_surf, (255, 255, 255), (x * int(self.grid_params['size']), 0), (x * int(self.grid_params['size']), int(self.grid_params['size']) * y))
 
-                for y, row in enumerate(self.tiles[:]):
-                    for x, tile in enumerate(row):
-                        if x == self.tile_m_x/int(self.grid_params['size']) and y == self.tile_m_y/int(self.grid_params['size']):
-                            if m_btns[0]:
-                                self.tiles[y][x] = self.current_selected_tile_type
+                # (This worked, ty stackoverflow) Checks if mousebutton is pressed above tile and replace tile with currently selected tile
+                if grid_rect.collidepoint(m_x, m_y):
+                    y = 0
+                    x = 0
+                    for row in self.tiles.iterrows():
+                        x = 0
+                        for col in self.tiles:
+                            if x == self.tile_m_x/int(self.grid_params['size']) and y == self.tile_m_y/int(self.grid_params['size']):
+                                if m_btns[0]:
+                                    self.tiles.loc[x, y] = self.current_selected_tile_type
+
+                            x += 1
+                        y += 1
+                else:
+                    pass
 
                 if self.grid_params['x'] != '0' and self.grid_params['y'] != '0' and self.grid_params['size'] != '0':
                     self.export = ex_button.draw()
@@ -245,14 +267,35 @@ class Main:
                     pygame.quit()
                     exit()
 
-            # draws the tiles
-            for r_index, row in enumerate(self.tiles):
-                for c_index, char in enumerate(row):
-                    if char == '1':
-                        pygame.draw.rect(grid_surf, (255, 0, 0), pygame.Rect(c_index * int(self.grid_params['size']),
-                                                                             r_index * int(self.grid_params['size']),
-                                                                             int(self.grid_params['size']),
-                                                                             int(self.grid_params['size'])))
+            #TODO rework this to actually draw the tiles
+            #x = 0
+            #y = 0
+            #for row in self.tiles.iterrows():
+            #    x = 0
+            #    for col in self.tiles:
+            #        if col is 1:
+            #            pygame.draw.rect(grid_surf, (255, 0, 0), pygame.Rect(x * int(self.grid_params['size']),
+            #                                                                 y * int(self.grid_params['size']),
+            #                                                                 int(self.grid_params['size']),
+            #                                                                 int(self.grid_params['size'])))
+            #        x += 1
+            #    y += 1
+
+            y = 0
+            x = 0
+            for row in self.tiles.iterrows():
+                x = 0
+                for col in self.tiles:
+                    #print(x, y)
+                    if self.tiles.loc[x, y] == '1':
+                        pygame.draw.rect(grid_surf, (255, 0, 0), pygame.Rect(
+                                        x * int(self.grid_params['size']),
+                                        y * int(self.grid_params['size']),
+                                        int(self.grid_params['size']),
+                                        int(self.grid_params['size'])))
+
+                    x += 1
+                y += 1
 
             # Draws, resets the loop and keeps the framerate capped.
             self.win.blit(grid_surf, (0, 0))
