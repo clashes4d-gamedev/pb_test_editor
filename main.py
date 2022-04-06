@@ -6,6 +6,7 @@ from sys import exit
 from pygame import gfxdraw
 from SPRNVA import Vector
 from pandas import DataFrame
+import math
 pygame.init()
 
 # TODO Optimize
@@ -14,6 +15,8 @@ class Main:
         # Sets the window size to be the resolution of the monitor
         self.info_object = pygame.display.Info()
         self.win_size = (self.info_object.current_w, self.info_object.current_h)
+        pygame.mouse.set_visible(False)
+
         # Finds the center coordinates of the screen and stores them in a Vector
         self.center = Vector(self.win_size[0] / 2, self.win_size[1] / 2)
 
@@ -26,6 +29,10 @@ class Main:
         self.keys = pygame.key.get_pressed()
         self.m_x, self.m_y = pygame.mouse.get_pos()
         self.m_btns = pygame.mouse.get_pressed()
+        self.offset_vec = Vector(0,0)
+        self.current_offset = Vector(0,0)
+        self.m_vec = Vector(0,0)
+        self.org_vec = Vector(0,0)
 
         # Button setup and tile type selection
         self.tile_select_b_size = Vector(50, 50)
@@ -49,8 +56,6 @@ class Main:
                 self.image_tiles[tile_index] = self.tile_types[tile_index]['file_path']
             else:
                 self.image_tiles[tile_index] = str()
-
-        #print(self.image_tiles)
 
         # Checks if the user has pressed the export button
         self.export = False
@@ -178,6 +183,7 @@ class Main:
     def update(self):
         grid_surf = pygame.Surface((self.win_size[0], self.win_size[1]/1.2))
         gen_map = True
+        lock_m_pos = False
 
         grid_param_inputs = {}
         for i, key in enumerate(self.grid_params):
@@ -188,6 +194,8 @@ class Main:
             grid_surf.fill((64, 64, 64))
             grid_rect = grid_surf.get_rect()
             self.win.fill((0, 0, 0))
+
+            self.current_offset += -self.offset_vec
 
             # Displays fps
             sprnva.TextRenderer(self.win, self.win_size[0] - 50, self.win_size[1] - 150, 'FPS: ' + str(int(self.clock.get_fps())), 'Arial', 20, (255, 0, 0))
@@ -200,9 +208,34 @@ class Main:
             self.m_x, self.m_y = pygame.mouse.get_pos()
             self.m_btns = pygame.mouse.get_pressed()
 
+            # This gets the offset the mouse has traveled if mouse 2 is pressed and the mouse has moved
+            # TODO Optimize this write this in a function!
+            if self.m_btns[2]:
+                if lock_m_pos is False:
+                    origin_m_x = self.m_x
+                    origin_m_y = self.m_y
+                    lock_m_pos = True
+                
+                if lock_m_pos:
+                    self.m_vec = Vector(self.m_x, self.m_y)
+                    self.org_vec = Vector(origin_m_x, origin_m_y)
+            else:
+                self.offset_vec = Vector(0,0)
+
+            # Handel's events
+            for event in events:
+                # handel's exit
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                # Handel's mouseevents
+                if event.type == pygame.MOUSEBUTTONUP:
+                    if event.button == 3:
+                        self.offset_vec = self.org_vec - self.m_vec
+                        lock_m_pos = False
+
             # Checks if Escape has been pressed, if so exit
             if self.keys[pygame.K_ESCAPE]:
-                #print(self.tiles.to_dict())
                 pygame.quit()
                 exit()
 
@@ -239,8 +272,14 @@ class Main:
             # Draws a Grid in given dimensions. and generates tile coordinates
             try:
                 # Tile coordinates
-                self.tile_m_x = self.m_x // int(self.grid_params['size']) * int(self.grid_params['size'])
-                self.tile_m_y = self.m_y // int(self.grid_params['size']) * int(self.grid_params['size'])
+                self.tile_m_x = self.m_x // int(self.grid_params['size']) * int(self.grid_params['size'])# + self.current_offset.x
+                self.tile_m_y = self.m_y // int(self.grid_params['size']) * int(self.grid_params['size'])# + self.current_offset.y
+
+                #TODO get the offset to work in the tilemap
+
+                #DEBUG
+                #pygame.draw.rect(grid_surf, (255,0,0), (self.tile_m_x/int(self.grid_params['size']), self.tile_m_y/int(self.grid_params['size']), 25, 25))
+                pygame.draw.circle(grid_surf, (255,0,0), (self.tile_m_x/int(self.grid_params['size']) + self.current_offset.x, self.tile_m_y/int(self.grid_params['size'])), 1)
 
                 # Get's the grid parameters and draws the export button if they are not zero
                 if self.grid_params['x'] != '0' and self.grid_params['y'] != '0' and self.grid_params['size'] != '0' and gen_map is True:
@@ -253,18 +292,20 @@ class Main:
                 if self.grid_params['x'] != '0' and self.grid_params['y'] != '0' and self.grid_params['size'] != '0':
                     self.export = ex_button.draw()
 
-                #THIS FUCKING WORKS YEEEEEEEEEEEEEE AND IT DOESNT USE PANDAS DATAFRAMES! so i basically doubled the framerate. this is x77 times faster than using iterrows()
+                #print(self.current_offset.x//int(self.grid_params['size']), self.current_offset.y//int(self.grid_params['size']))
+
+                #THIS FUCKING WORKS YEEEEEEEEEEEEEE AND IT DOESNT USE PANDAS DATAFRAMES! so i basically doubled the framerate. this is x77 times faster then using iterrows()
                 x = 0
                 y = 0
                 for row in self.tiles.items():
                     x = 0
                     for tile in row[1].items():
                         # Generates grid
-                        gfxdraw.pixel(grid_surf, x * int(self.grid_params['size']), int(self.grid_params['size']) * y, (255,255,255))
+                        gfxdraw.pixel(grid_surf, x * int(self.grid_params['size']) + self.current_offset.x, y * int(self.grid_params['size']) + self.current_offset.y, (255,255,255))
 
                         if grid_rect.collidepoint(self.m_x, self.m_y):
                             if self.m_btns[0]:
-                                if x == self.tile_m_x/int(self.grid_params['size']) and y == self.tile_m_y/int(self.grid_params['size']):
+                                if x == (self.tile_m_x//int(self.grid_params['size']) - round(self.current_offset.x/int(self.grid_params['size']))) and y == (self.tile_m_y//int(self.grid_params['size']) - round(self.current_offset.y/int(self.grid_params['size']))):
                                         self.tiles[y][x] = self.current_selected_tile_type
 
                         if tile[1] in self.tile_types:                                
@@ -273,22 +314,21 @@ class Main:
                                 if tile[1] == key:
                                     pygame.draw.rect(grid_surf, (self.tile_types[tile[1]]['alt_r'], self.tile_types[tile[1]]['alt_g'], self.tile_types[tile[1]]['alt_b']),
                                             pygame.Rect(
-                                            x * int(self.grid_params['size'])+1,
-                                            y * int(self.grid_params['size'])+1,
+                                            x * int(self.grid_params['size'])+1 + self.current_offset.x,
+                                            y * int(self.grid_params['size'])+1 + self.current_offset.y,
                                             int(self.grid_params['size'])-1,
                                             int(self.grid_params['size'])-1))
-
                         x += 1
                     y += 1
 
                 # Draws the tile cursor at the given tile
                 if grid_rect.collidepoint(self.m_x, self.m_y):
-                    if self.tile_m_x/int(self.grid_params['size']) <= self.grid_params['y']-1 and self.tile_m_y/int(self.grid_params['size']) <= self.grid_params['x']-1:
+                    #if self.tile_m_x/int(self.grid_params['size']) <= self.grid_params['y']-1 and self.tile_m_y/int(self.grid_params['size']) <= self.grid_params['x']-1:
                         # Tells the user the position of the current tile he is hovering over.
-                        sprnva.TextRenderer(self.win, self.win_size[0] - 250, self.win_size[1] - 50, f'POS: {self.tile_m_x / int(self.grid_params["size"])+1, self.tile_m_y / int(self.grid_params["size"])+1}', 'Arial', 20, (255, 255, 255))
+                    sprnva.TextRenderer(self.win, self.win_size[0] - 250, self.win_size[1] - 50, f'POS: {self.tile_m_x / int(self.grid_params["size"])+1, self.tile_m_y / int(self.grid_params["size"])+1}', 'Arial', 20, (255, 255, 255))
 
                         #displays the tile cursor in the grid_window
-                        pygame.draw.rect(grid_surf, (255, 255, 255), pygame.Rect(self.tile_m_x, self.tile_m_y, int(self.grid_params['size']), int(self.grid_params['size'])))
+                    #pygame.draw.rect(grid_surf, (255, 255, 255), pygame.Rect(self.til, int(self.grid_params['size']), int(self.grid_params['size'])))
 
             except ZeroDivisionError:
                 self.tiles = DataFrame(list())
@@ -304,14 +344,11 @@ class Main:
                 pygame.time.delay(1000)
                 self.export_screen()
 
-            # Handel's exit
-            for event in events:
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    exit()
-
             # Draws, resets the loop and keeps the framerate capped.
             self.win.blit(grid_surf, (0, 0))
+
+            #Draws the virtual cursor
+            pygame.draw.circle(self.win, (255,255,255), (self.m_x, self.m_y), 3)
             pygame.display.flip()
             self.clock.tick(self.fps)
 
