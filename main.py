@@ -6,10 +6,10 @@ from sys import exit
 from pygame import gfxdraw
 from SPRNVA import Vector
 from pandas import DataFrame
-import math
 pygame.init()
 
 # TODO Optimize
+# TODO PLEASE, FOR THE LOVE OF EVERYTHING THAT IS HOLY TO YOU, MAKE THIS OBJECT ORIENTED!
 class Main:
     def __init__(self):
         # Sets the window size to be the resolution of the monitor
@@ -41,7 +41,7 @@ class Main:
         self.tile_types = self.tile_types['tile_types']
         self.current_selected_tile_type = '1'
 
-        # Stores the 'Drawn' tiles in a list
+        # Stores the 'Drawn' tiles in a dict
         self.tiles = DataFrame(list())
         self.tiles = self.tiles.to_dict()
         self.tile_m_x = 0
@@ -64,9 +64,6 @@ class Main:
         self.grid_params = {'x': '0', 'y': '0', 'size': '0'}
 
     def grid_param_input_fields(self, events, grid_param_inputs):
-        # Draws a text which tells the user what tile he has currently selected.
-        sprnva.TextRenderer(self.win, self.tile_select_b_size.x + self.center.x - (self.tile_select_b_size.x * len(self.tile_types))/2 + self.tile_select_b_size.x/2, self.center.y*2 - self.tile_select_b_size.y - 20, 'Current selected tile type: ' + self.tile_types[self.current_selected_tile_type]['name'], 'Arial', 10, (255, 255, 255))
-
         # Draws and gets the input value out of the three text boxes at the bottom of the screen.
         # TODO Make the x and y display correctly
         for index, key in enumerate(grid_param_inputs):
@@ -177,6 +174,10 @@ class Main:
                 exit()
 
             self.win.blit(ex_surf, (0, 0))
+            #Draws the virtual cursor
+            pygame.draw.circle(self.win, (255,255,255), (m_x, m_y), 3)
+            pygame.draw.circle(self.win, (0,0,0), (self.m_x, self.m_y), 3, width=1)
+
             pygame.display.update()
             self.clock.tick(self.fps)
 
@@ -187,7 +188,7 @@ class Main:
 
         grid_param_inputs = {}
         for i, key in enumerate(self.grid_params):
-            grid_param_inputs[key] = sprnva.InputBox(self.win, Vector(self.center.x/2, (self.center.y*2 - 60) + i*20), Vector(50, 20))
+            grid_param_inputs[key] = sprnva.InputBox(self.win, Vector(self.center.x/2, (self.center.y*2 - 80) + i*20), Vector(50, 20))
 
         while True:
             # Clears surfaces
@@ -249,12 +250,18 @@ class Main:
                                            self.m_btns,
                                            0, btn_text='Export as .lvl')
 
+            # Draws a text which tells the user what tile he has currently selected.
+            sprnva.TextRenderer(self.win, self.tile_select_b_size.x + self.center.x - (self.tile_select_b_size.x * len(self.tile_types))/2 + self.tile_select_b_size.x/2,
+                                self.center.y*2 - self.tile_select_b_size.y - 40,
+                                'Current selected tile type: ' + self.tile_types[self.current_selected_tile_type]['name'],
+                                'Arial', 10, (255, 255, 255))
+
             for tile in self.tile_types:
                 tile_name = self.tile_types[tile]['name']
 
                 sel_btn = sprnva.Button(self.win,
                                         int(tile)*self.tile_select_b_size.x + self.center.x - (self.tile_select_b_size.x * len(self.tile_types)/2),
-                                        self.center.y*2 - self.tile_select_b_size.y,
+                                        self.center.y*2 - self.tile_select_b_size.y - 20,
                                         self.tile_select_b_size.x,
                                         self.tile_select_b_size.y,
                                         (self.m_x, self.m_y),
@@ -279,7 +286,7 @@ class Main:
 
                 #DEBUG
                 #pygame.draw.rect(grid_surf, (255,0,0), (self.tile_m_x/int(self.grid_params['size']), self.tile_m_y/int(self.grid_params['size']), 25, 25))
-                pygame.draw.circle(grid_surf, (255,0,0), (self.tile_m_x/int(self.grid_params['size']) + self.current_offset.x, self.tile_m_y/int(self.grid_params['size'])), 1)
+                #pygame.draw.circle(grid_surf, (255,0,0), (self.tile_m_x/int(self.grid_params['size']) + self.current_offset.x, self.tile_m_y/int(self.grid_params['size'])), 1)
 
                 # Get's the grid parameters and draws the export button if they are not zero
                 if self.grid_params['x'] != '0' and self.grid_params['y'] != '0' and self.grid_params['size'] != '0' and gen_map is True:
@@ -323,12 +330,10 @@ class Main:
 
                 # Draws the tile cursor at the given tile
                 if grid_rect.collidepoint(self.m_x, self.m_y):
-                    #if self.tile_m_x/int(self.grid_params['size']) <= self.grid_params['y']-1 and self.tile_m_y/int(self.grid_params['size']) <= self.grid_params['x']-1:
                         # Tells the user the position of the current tile he is hovering over.
-                    sprnva.TextRenderer(self.win, self.win_size[0] - 250, self.win_size[1] - 50, f'POS: {self.tile_m_x / int(self.grid_params["size"])+1, self.tile_m_y / int(self.grid_params["size"])+1}', 'Arial', 20, (255, 255, 255))
-
-                        #displays the tile cursor in the grid_window
-                    #pygame.draw.rect(grid_surf, (255, 255, 255), pygame.Rect(self.til, int(self.grid_params['size']), int(self.grid_params['size'])))
+                    sprnva.TextRenderer(self.win, self.win_size[0] - 250, self.win_size[1] - 50,
+                                        f'POS: {self.tile_m_x//int(self.grid_params["size"]) - round(self.current_offset.x/int(self.grid_params["size"]))+1, self.tile_m_y//int(self.grid_params["size"]) - round(self.current_offset.y/int(self.grid_params["size"]))+1}',
+                                        'Arial', 20, (255, 255, 255))
 
             except ZeroDivisionError:
                 self.tiles = DataFrame(list())
@@ -349,6 +354,8 @@ class Main:
 
             #Draws the virtual cursor
             pygame.draw.circle(self.win, (255,255,255), (self.m_x, self.m_y), 3)
+            pygame.draw.circle(self.win, (0,0,0), (self.m_x, self.m_y), 3, width=1)
+
             pygame.display.flip()
             self.clock.tick(self.fps)
 
