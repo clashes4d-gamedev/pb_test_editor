@@ -36,6 +36,7 @@ class Main:
 
         # Stores the 'Drawn' tiles in a list
         self.tiles = DataFrame(list())
+        self.tiles = self.tiles.to_dict()
         self.tile_m_x = 0
         self.tile_m_y = 0
         self.selected_tile = Vector(0, 0)
@@ -49,7 +50,7 @@ class Main:
             else:
                 self.image_tiles[tile_index] = str()
 
-        print(self.image_tiles)
+        #print(self.image_tiles)
 
         # Checks if the user has pressed the export button
         self.export = False
@@ -62,6 +63,7 @@ class Main:
         sprnva.TextRenderer(self.win, self.tile_select_b_size.x + self.center.x - (self.tile_select_b_size.x * len(self.tile_types))/2 + self.tile_select_b_size.x/2, self.center.y*2 - self.tile_select_b_size.y - 20, 'Current selected tile type: ' + self.tile_types[self.current_selected_tile_type]['name'], 'Arial', 10, (255, 255, 255))
 
         # Draws and gets the input value out of the three text boxes at the bottom of the screen.
+        # TODO Make the x and y display correctly
         for index, key in enumerate(grid_param_inputs):
             sprnva.TextRenderer(self.win, grid_param_inputs[key].collider.x - 64, grid_param_inputs[key].collider.y + 10, 'Grid ' + key + ':', 'Arial', 16, (255, 255, 255))
             grid_param_inputs[key].get_input(events)
@@ -121,8 +123,14 @@ class Main:
                 # .lvl Encoder/file generator
                 ex_path = tb_ex_path.get_value()
                 file = open(ex_path + '.lvl', 'w')
-                transposed_tiles = self.tiles.transpose()
-                tile_lines = transposed_tiles.values.tolist()
+                tile_lines = []
+                tile_line = []
+                for row in self.tiles.items():
+                    tile_line = []
+                    for tile in row[1].items():
+                        tile_line.append(tile[1])
+                    tile_lines.append(tile_line)
+                
 
                 file.write('TILE_TYPES_BEGIN\n')
                 
@@ -194,6 +202,7 @@ class Main:
 
             # Checks if Escape has been pressed, if so exit
             if self.keys[pygame.K_ESCAPE]:
+                #print(self.tiles.to_dict())
                 pygame.quit()
                 exit()
 
@@ -207,7 +216,7 @@ class Main:
                                            self.m_btns,
                                            0, btn_text='Export as .lvl')
 
-            for tile in self.tile_types: #I think this is not needed
+            for tile in self.tile_types:
                 tile_name = self.tile_types[tile]['name']
 
                 sel_btn = sprnva.Button(self.win,
@@ -238,42 +247,43 @@ class Main:
                     row = int(self.grid_params['x']) * ['0']
                     self.tiles = int(self.grid_params['y']) * [row]
                     self.tiles = DataFrame(self.tiles)
+                    self.tiles = self.tiles.to_dict()
                     gen_map = False
 
                 if self.grid_params['x'] != '0' and self.grid_params['y'] != '0' and self.grid_params['size'] != '0':
                     self.export = ex_button.draw()
 
-                # (This worked, ty stackoverflow) Checks if mousebutton is pressed above tile and replace tile with currently selected tile
-                y = 0
+                #THIS FUCKING WORKS YEEEEEEEEEEEEEE AND IT DOESNT USE PANDAS DATAFRAMES! so i basically doubled the framerate. this is x77 times faster than using iterrows()
                 x = 0
-                for row in self.tiles.iterrows():
+                y = 0
+                for row in self.tiles.items():
                     x = 0
-                    for col in self.tiles:
-
+                    for tile in row[1].items():
                         # Generates grid
                         gfxdraw.pixel(grid_surf, x * int(self.grid_params['size']), int(self.grid_params['size']) * y, (255,255,255))
 
                         if grid_rect.collidepoint(self.m_x, self.m_y):
-                            if x == self.tile_m_x/int(self.grid_params['size']) and y == self.tile_m_y/int(self.grid_params['size']):
-                                if self.m_btns[0]:
-                                        self.tiles.loc[y, x] = self.current_selected_tile_type
+                            if self.m_btns[0]:
+                                if x == self.tile_m_x/int(self.grid_params['size']) and y == self.tile_m_y/int(self.grid_params['size']):
+                                        self.tiles[y][x] = self.current_selected_tile_type
 
-                        tile_index = self.tiles.loc[y, x]
-                        if tile_index in self.tile_types:                                
+                        if tile[1] in self.tile_types:                                
                             for key in self.tile_types:
-                                if tile_index == key:
-                                    pygame.draw.rect(grid_surf, (self.tile_types[tile_index]['alt_r'], self.tile_types[tile_index]['alt_g'], self.tile_types[tile_index]['alt_b']),
+                                #print(tile[1], key)
+                                if tile[1] == key:
+                                    pygame.draw.rect(grid_surf, (self.tile_types[tile[1]]['alt_r'], self.tile_types[tile[1]]['alt_g'], self.tile_types[tile[1]]['alt_b']),
                                             pygame.Rect(
                                             x * int(self.grid_params['size'])+1,
                                             y * int(self.grid_params['size'])+1,
                                             int(self.grid_params['size'])-1,
                                             int(self.grid_params['size'])-1))
+
                         x += 1
                     y += 1
 
                 # Draws the tile cursor at the given tile
                 if grid_rect.collidepoint(self.m_x, self.m_y):
-                    if self.tile_m_x/int(self.grid_params['size']) <= self.grid_params['x']-1 and self.tile_m_y/int(self.grid_params['size']) <= self.grid_params['y']-1:
+                    if self.tile_m_x/int(self.grid_params['size']) <= self.grid_params['y']-1 and self.tile_m_y/int(self.grid_params['size']) <= self.grid_params['x']-1:
                         # Tells the user the position of the current tile he is hovering over.
                         sprnva.TextRenderer(self.win, self.win_size[0] - 250, self.win_size[1] - 50, f'POS: {self.tile_m_x / int(self.grid_params["size"])+1, self.tile_m_y / int(self.grid_params["size"])+1}', 'Arial', 20, (255, 255, 255))
 
@@ -282,6 +292,7 @@ class Main:
 
             except ZeroDivisionError:
                 self.tiles = DataFrame(list())
+                self.tile = self.tiles.to_dict()
                 gen_map = True
 
             # If the tilesize is 0 a ZeroDivisionError will be triggered and the Tilemap resets.
