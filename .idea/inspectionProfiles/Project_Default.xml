@@ -12,6 +12,7 @@
           <option value="E302" />
           <option value="E501" />
           <option value="E116" />
+          <option value="E402" />
         </list>
       </option>
     </inspection_tool>
@@ -36,6 +37,12 @@
           <option value="lib.formats_3d.ImportExport.export_preview_path" />
           <option value="lib.formats_3d.ImportExport.generate_preview" />
           <option value="lib.formats_3d.ImportExport.preview_type" />
+          <option value="AU_LIB.import_export.export_path" />
+          <option value="AU_LIB.import_export.scipy" />
+          <option value="AU_LIB.import_export.TEMP_WAV_" />
+          <option value="AU_LIB.import_export.TEMP_WAV_FILE" />
+          <option value="core.extlib.AU_LIB.import_export.temp_wav_" />
+          <option value="google.api_core.*" />
         </list>
       </option>
     </inspection_tool>

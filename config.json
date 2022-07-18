@@ -2,23 +2,18 @@
     "tile_types":{
         "0":{"name": "Air",
             "file_path":"",
-            "alt_r": 64,
-            "alt_g": 64,
-            "alt_b": 64},
+            "color": [64, 64, 64]},
         "1":{"name": "Stone",
             "file_path": "/Users/fabienschneider/Downloads/slack_profil_bild.jpg",
-            "alt_r": 0,
-            "alt_g": 255,
-            "alt_b": 0},
+            "color": [0, 255, 0]
+        },
         "2":{"name": "Wood",
             "file_path": "",
-            "alt_r": 0,
-            "alt_g": 0,
-            "alt_b": 255},
+            "color": [0, 0, 255]
+        },
         "3":{"name": "Dirt",
             "file_path": "",
-            "alt_r": 0,
-            "alt_g": 255,
-            "alt_b": 255}
+            "color": [0, 255, 255]
+        }
     }
 }
