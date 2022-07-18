@@ -47,15 +47,6 @@ class Main:
         self.tile_m_x = 0
         self.tile_m_y = 0
         self.selected_tile = Vector2D(0, 0)
-        self.image_tiles = {}
-        self.load_image_tiles = True
-
-        # Checks if the tile is an image if so store the image path in a python dictionary
-        for tile_index in self.tile_types:
-            if self.tile_types[tile_index]['file_path'] != str():
-                self.image_tiles[tile_index] = self.tile_types[tile_index]['file_path']
-            else:
-                self.image_tiles[tile_index] = str()
 
         # Checks if the user has pressed the export button
         self.export = False

@@ -1,18 +1,14 @@
 {
     "tile_types":{
         "0":{"name": "Air",
-            "file_path":"",
             "color": [64, 64, 64]},
         "1":{"name": "Stone",
-            "file_path": "/Users/fabienschneider/Downloads/slack_profil_bild.jpg",
             "color": [0, 255, 0]
         },
         "2":{"name": "Wood",
-            "file_path": "",
             "color": [0, 0, 255]
         },
         "3":{"name": "Dirt",
-            "file_path": "",
             "color": [0, 255, 255]
         }
     }
